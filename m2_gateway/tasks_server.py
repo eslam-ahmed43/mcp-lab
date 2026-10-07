@@ -13,7 +13,7 @@ VALID_PRIORITIES = {"low", "medium", "high"}
 def create_task(title: str, priority: str = "medium") -> dict:
     """Create a new task. priority must be low, medium, or high."""
     if priority not in VALID_PRIORITIES:
-        raise ValueError("priority must be low, medium, or high")
+        raise ValueError("VALIDATION: priority must be low, medium, or high")
     return store.create_task(title, priority)
 
 
@@ -22,7 +22,7 @@ def complete_task(task_id: int) -> dict:
     """Mark a task as done."""
     task = store.complete_task(task_id)
     if task is None:
-        raise ValueError(f"task {task_id} not found")
+        raise ValueError(f"NOT_FOUND: task {task_id} not found")
     return task
 
 
@@ -30,7 +30,7 @@ def complete_task(task_id: int) -> dict:
 def delete_task(task_id: int) -> dict:
     """Permanently delete a task."""
     if not store.delete_task(task_id):
-        raise ValueError(f"task {task_id} not found")
+        raise ValueError(f"NOT_FOUND: task {task_id} not found")
     return {"deleted": task_id}
 
 
@@ -45,7 +45,7 @@ def one_task(task_id: int) -> dict:
     """A single task by id."""
     task = store.get_task(task_id)
     if task is None:
-        raise ValueError(f"task {task_id} not found")
+        raise ValueError(f"NOT_FOUND: task {task_id} not found")
     return task
 
 
