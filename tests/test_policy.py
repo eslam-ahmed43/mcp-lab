@@ -28,3 +28,14 @@ def test_admin_delete_requires_approval():
 def test_unknown_tool_is_denied():
     admin = authenticate("admin-token")
     assert authorize(admin, "drop_database", {}) == Decision.DENY
+
+
+def test_writer_cannot_review_approvals():
+    writer = authenticate("writer-token")
+    assert authorize(writer, "review_approval", {}) == Decision.DENY
+
+
+def test_admin_can_list_and_review_approvals():
+    admin = authenticate("admin-token")
+    assert authorize(admin, "review_approval", {}) == Decision.ALLOW
+    assert authorize(admin, "list_pending_approvals", {}) == Decision.ALLOW

@@ -4,3 +4,4 @@ __pycache__/
 .qodo/
 .env
 *.db
+*.jsonl

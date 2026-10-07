@@ -4,6 +4,7 @@ TOKENS = {
     "reader-token": ("alice", "reader"),
     "writer-token": ("bob", "writer"),
     "admin-token": ("carol", "admin"),
+    "admin2-token": ("dave", "admin"),
 }
 
 

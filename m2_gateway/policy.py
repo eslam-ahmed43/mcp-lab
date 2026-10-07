@@ -12,14 +12,16 @@ class Decision(str, Enum):
 ROLE_PERMISSIONS = {
     "reader": {"read"},
     "writer": {"read", "write"},
-    "admin": {"read", "write", "delete"},
+    "admin": {"read", "write", "delete", "approve"},
 }
 
 TOOL_PERMISSION = {
+    "read_tasks": "read",
     "create_task": "write",
     "complete_task": "write",
     "delete_task": "delete",
-    "read_tasks": "read",
+    "review_approval": "approve",
+    "list_pending_approvals": "approve",
 }
 
 APPROVAL_REQUIRED = {"delete_task"}
