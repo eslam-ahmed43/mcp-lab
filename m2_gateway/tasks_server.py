@@ -26,6 +26,14 @@ def complete_task(task_id: int) -> dict:
     return task
 
 
+@mcp.tool
+def delete_task(task_id: int) -> dict:
+    """Permanently delete a task."""
+    if not store.delete_task(task_id):
+        raise ValueError(f"task {task_id} not found")
+    return {"deleted": task_id}
+
+
 @mcp.resource("tasks://all")
 def all_tasks() -> list[dict]:
     """All tasks, read-only context."""

@@ -19,6 +19,7 @@ TOOL_PERMISSION = {
     "create_task": "write",
     "complete_task": "write",
     "delete_task": "delete",
+    "read_tasks": "read",
 }
 
 APPROVAL_REQUIRED = {"delete_task"}

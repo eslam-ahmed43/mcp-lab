@@ -55,3 +55,9 @@ def complete_task(task_id: int) -> dict | None:
         conn.execute("UPDATE tasks SET done = 1 WHERE id = ?", (task_id,))
         row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     return _to_dict(row) if row else None
+
+
+def delete_task(task_id: int) -> bool:
+    with closing(_connect()) as conn, conn:
+        cur = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    return cur.rowcount > 0
