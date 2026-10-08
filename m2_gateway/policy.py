@@ -22,6 +22,7 @@ TOOL_PERMISSION = {
     "delete_task": "delete",
     "review_approval": "approve",
     "list_pending_approvals": "approve",
+    "retry_approval": "approve",
 }
 
 APPROVAL_REQUIRED = {"delete_task"}

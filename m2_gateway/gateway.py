@@ -141,6 +141,30 @@ async def review_approval(approval_id: int, approve: bool) -> dict:
     return {"status": "approved", "execution": "executed", "result": result}
 
 
+@mcp.tool
+async def retry_approval(approval_id: int) -> dict:
+    """Re-run an approved request whose execution failed."""
+    arguments = {"approval_id": approval_id}
+    principal, decision = _check("retry_approval", arguments)
+    try:
+        item = approvals.get_retryable(approval_id)
+    except ApprovalError as exc:
+        audit.record(
+            principal.name, "retry_approval", arguments, decision.value, f"refused: {exc}"
+        )
+        raise
+    audit.record(principal.name, "retry_approval", arguments, decision.value, "retrying")
+    try:
+        result = await _run(
+            item.requester, item.tool, item.arguments, f"APPROVED_BY:{item.reviewer}"
+        )
+    except ToolFailure as failure:
+        approvals.record_execution(item.id, False, str(failure))
+        return {"status": "approved", "execution": "failed", "error": str(failure)}
+    approvals.record_execution(item.id, True)
+    return {"status": "approved", "execution": "executed", "result": result}
+
+
 @mcp.resource("tasks://all")
 async def all_tasks() -> str:
     """All tasks, read-only context."""

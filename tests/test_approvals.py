@@ -70,3 +70,18 @@ def test_cannot_record_execution_before_approval():
     item = make_item(store)
     with pytest.raises(ApprovalError):
         store.record_execution(item.id, True)
+
+
+def test_only_failed_executions_are_retryable():
+    store = ApprovalStore()
+    item = make_item(store)
+    with pytest.raises(ApprovalError):
+        store.get_retryable(item.id)
+    store.decide(item.id, "dave", "admin", True)
+    with pytest.raises(ApprovalError):
+        store.get_retryable(item.id)
+    store.record_execution(item.id, False, "TIMEOUT: x")
+    assert store.get_retryable(item.id).id == item.id
+    store.record_execution(item.id, True)
+    with pytest.raises(ApprovalError):
+        store.get_retryable(item.id)

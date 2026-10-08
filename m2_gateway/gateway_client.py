@@ -26,6 +26,8 @@ async def run(client, action):
         return await client.call_tool(
             "review_approval", {"approval_id": int(value), "approve": False}
         )
+    if name == "retry":
+        return await client.call_tool("retry_approval", {"approval_id": int(value)})
     raise SystemExit(f"unknown action {action}")
 
 

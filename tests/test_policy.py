@@ -39,3 +39,7 @@ def test_admin_can_list_and_review_approvals():
     admin = authenticate("admin-token")
     assert authorize(admin, "review_approval", {}) == Decision.ALLOW
     assert authorize(admin, "list_pending_approvals", {}) == Decision.ALLOW
+
+def test_retry_approval_is_admin_only():
+    assert authorize(authenticate("writer-token"), "retry_approval", {}) == Decision.DENY
+    assert authorize(authenticate("admin-token"), "retry_approval", {}) == Decision.ALLOW

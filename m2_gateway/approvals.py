@@ -54,3 +54,12 @@ class ApprovalStore:
         item.execution = "executed" if ok else "failed"
         item.error = error
         return item
+    def get_retryable(self, approval_id: int) -> Approval:
+        item = self._items.get(approval_id)
+        if item is None:
+            raise ApprovalError(f"approval {approval_id} not found")
+        if item.status != "approved" or item.execution != "failed":
+            raise ApprovalError(
+                "only approved requests whose execution failed can be retried"
+            )
+        return item
