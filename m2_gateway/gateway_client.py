@@ -14,6 +14,8 @@ async def run(client, action):
     if action == "read":
         return await client.read_resource("tasks://all")
     name, _, value = action.partition(":")
+    if name == "complete":
+        return await client.call_tool("complete_task", {"task_id": int(value)})
     if name == "delete":
         return await client.call_tool("delete_task", {"task_id": int(value)})
     if name == "approve":

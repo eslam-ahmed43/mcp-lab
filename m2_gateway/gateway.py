@@ -10,13 +10,14 @@ from auth import authenticate
 from errors import ErrorCategory, ToolFailure, classify
 from policy import Decision, authorize
 from retry import call_with_retry
+from faults import from_env
 
 BACKEND = Path(__file__).parent / "tasks_server.py"
 SAFE_TO_RETRY = {"complete_task", "delete_task"}
 
 mcp = FastMCP("gateway")
 approvals = ApprovalStore()
-
+faults = from_env()
 
 def _principal():
     headers = get_http_headers(include_all=True)
@@ -34,8 +35,8 @@ def _check(tool: str, arguments: dict):
         raise PermissionError(f"{tool} denied")
     return principal, decision
 
-
 async def _call_backend(tool: str, arguments: dict):
+    faults.maybe_fail(tool)
     async with Client(BACKEND) as backend:
         result = await backend.call_tool(tool, arguments)
     return result.data
