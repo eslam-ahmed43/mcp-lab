@@ -65,3 +65,9 @@ async def test_validation_fault_is_not_retried():
     with pytest.raises(ToolFailure):
         await call_with_retry(backend, sleep=no_sleep)
     assert len(attempts) == 1
+
+def test_after_faults_fire_only_in_after_phase():
+    injector = FaultInjector("create_task:after_timeout:1")
+    injector.maybe_fail("create_task")
+    with pytest.raises(TimeoutError):
+        injector.maybe_fail("create_task", "after")

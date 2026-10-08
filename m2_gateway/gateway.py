@@ -39,6 +39,7 @@ async def _call_backend(tool: str, arguments: dict):
     faults.maybe_fail(tool)
     async with Client(BACKEND) as backend:
         result = await backend.call_tool(tool, arguments)
+    faults.maybe_fail(tool, "after")
     return result.data
 
 
@@ -58,7 +59,7 @@ async def _run(user: str, tool: str, arguments: dict, decision: str):
         if failure.retryable:
             audit.record(user, tool, arguments, decision, f"attempt {attempt} failed: {failure}")
 
-    attempts = 4 if tool in SAFE_TO_RETRY else 1
+    attempts = 4 if tool in SAFE_TO_RETRY or arguments.get("idempotency_key") else 1
     try:
         data = await call_with_retry(
             lambda: _call_backend(tool, arguments),
@@ -73,10 +74,14 @@ async def _run(user: str, tool: str, arguments: dict, decision: str):
 
 
 @mcp.tool
-async def create_task(title: str, priority: str = "medium") -> dict:
+async def create_task(
+    title: str, priority: str = "medium", idempotency_key: str | None = None
+) -> dict:
     """Create a new task. priority must be low, medium, or high."""
     arguments = {"title": title, "priority": priority}
     principal, decision = _check("create_task", arguments)
+    if idempotency_key:
+        arguments["idempotency_key"] = f"{principal.name}:{idempotency_key}"
     return await _run(principal.name, "create_task", arguments, decision.value)
 
 
@@ -177,3 +182,4 @@ async def all_tasks() -> str:
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="127.0.0.1", port=8000)
+

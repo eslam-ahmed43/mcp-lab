@@ -10,15 +10,17 @@ class FaultInjector:
             tool, kind, times = part.split(":")
             self._remaining[tool] = (kind, int(times))
 
-    def maybe_fail(self, tool: str) -> None:
+    def maybe_fail(self, tool: str, phase: str = "before") -> None:
         entry = self._remaining.get(tool)
         if entry is None:
             return
         kind, times = entry
+        if kind.startswith("after_") != (phase == "after"):
+            return
         if times <= 0:
             return
         self._remaining[tool] = (kind, times - 1)
-        raise self._build(kind)
+        raise self._build(kind.removeprefix("after_"))
 
     @staticmethod
     def _build(kind: str) -> Exception:

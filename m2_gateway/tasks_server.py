@@ -10,11 +10,18 @@ VALID_PRIORITIES = {"low", "medium", "high"}
 
 
 @mcp.tool
-def create_task(title: str, priority: str = "medium") -> dict:
-    """Create a new task. priority must be low, medium, or high."""
+def create_task(
+    title: str, priority: str = "medium", idempotency_key: str | None = None
+) -> dict:
+    """Create a new task. priority must be low, medium, or high.
+    Pass idempotency_key to make retries safe: the same key returns the same task."""
     if priority not in VALID_PRIORITIES:
         raise ValueError("VALIDATION: priority must be low, medium, or high")
-    return store.create_task(title, priority)
+    try:
+        task, replayed = store.create_task_with_status(title, priority, idempotency_key)
+    except store.KeyReuseError as exc:
+        raise ValueError(f"VALIDATION: {exc}") from exc
+    return {**task, "replayed": replayed}
 
 
 @mcp.tool
