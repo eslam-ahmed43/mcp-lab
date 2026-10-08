@@ -19,7 +19,7 @@ def create_task(title: str, priority: str = "medium") -> dict:
 
 @mcp.tool
 def complete_task(task_id: int) -> dict:
-    """Mark a task as done."""
+    """Mark a task as done. Safe to repeat."""
     task = store.complete_task(task_id)
     if task is None:
         raise ValueError(f"NOT_FOUND: task {task_id} not found")
@@ -28,10 +28,9 @@ def complete_task(task_id: int) -> dict:
 
 @mcp.tool
 def delete_task(task_id: int) -> dict:
-    """Permanently delete a task."""
-    if not store.delete_task(task_id):
-        raise ValueError(f"NOT_FOUND: task {task_id} not found")
-    return {"deleted": task_id}
+    """Delete a task. Safe to repeat: deleting a missing task succeeds."""
+    existed = store.delete_task(task_id)
+    return {"deleted": task_id, "already_absent": not existed}
 
 
 @mcp.resource("tasks://all")

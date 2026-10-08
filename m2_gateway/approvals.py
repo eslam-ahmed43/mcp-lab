@@ -14,6 +14,8 @@ class Approval:
     arguments: dict
     status: str = "pending"
     reviewer: str | None = None
+    execution: str = "not_run"
+    error: str | None = None
 
 
 class ApprovalStore:
@@ -41,4 +43,14 @@ class ApprovalStore:
             raise ApprovalError("requester cannot review their own request")
         item.status = "approved" if approve else "rejected"
         item.reviewer = reviewer
+        return item
+
+    def record_execution(self, approval_id: int, ok: bool, error: str | None = None) -> Approval:
+        item = self._items.get(approval_id)
+        if item is None:
+            raise ApprovalError(f"approval {approval_id} not found")
+        if item.status != "approved":
+            raise ApprovalError("only approved requests can be executed")
+        item.execution = "executed" if ok else "failed"
+        item.error = error
         return item

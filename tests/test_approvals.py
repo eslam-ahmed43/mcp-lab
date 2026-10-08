@@ -43,3 +43,30 @@ def test_pending_only_lists_open_requests():
     make_item(store)
     store.decide(first.id, "dave", "admin", True)
     assert len(store.pending()) == 1
+
+
+def test_execution_result_is_recorded():
+    store = ApprovalStore()
+    item = make_item(store)
+    assert item.execution == "not_run"
+    store.decide(item.id, "dave", "admin", True)
+    done = store.record_execution(item.id, True)
+    assert done.execution == "executed"
+    assert done.error is None
+
+
+def test_failed_execution_keeps_error():
+    store = ApprovalStore()
+    item = make_item(store)
+    store.decide(item.id, "dave", "admin", True)
+    done = store.record_execution(item.id, False, "NOT_FOUND: task 1 not found")
+    assert done.status == "approved"
+    assert done.execution == "failed"
+    assert done.error == "NOT_FOUND: task 1 not found"
+
+
+def test_cannot_record_execution_before_approval():
+    store = ApprovalStore()
+    item = make_item(store)
+    with pytest.raises(ApprovalError):
+        store.record_execution(item.id, True)
