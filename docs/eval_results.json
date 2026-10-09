@@ -1,0 +1,129 @@
+{
+  "summary": {
+    "model": "models/gemini-3.6-flash",
+    "runs_per_scenario": 1,
+    "total": 6,
+    "tool_selection_accuracy": 1.0,
+    "argument_accuracy": 1.0
+  },
+  "records": [
+    {
+      "scenario": "create_with_priority",
+      "run": 1,
+      "expected_tool": "create_task",
+      "first_tool": "create_task",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "create_task",
+          "args": {
+            "priority": "high",
+            "title": "Prepare the demo"
+          },
+          "ok": true
+        }
+      ],
+      "final": "I have added the task \"Prepare the demo\" with high priority."
+    },
+    {
+      "scenario": "create_default_priority",
+      "run": 1,
+      "expected_tool": "create_task",
+      "first_tool": "create_task",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "create_task",
+          "args": {
+            "title": "Write the report"
+          },
+          "ok": true
+        }
+      ],
+      "final": "I have added the task \"Write the report\" to the task list."
+    },
+    {
+      "scenario": "list_tasks",
+      "run": 1,
+      "expected_tool": "read_tasks",
+      "first_tool": "read_tasks",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "read_tasks",
+          "args": {},
+          "ok": true
+        }
+      ],
+      "final": "Here are the current tasks on the list:\n\n### **Open Tasks**\n* **ID 16:** Prepare the demo *(Priority: High)*\n* **ID 17:** Write the report *(Priority: Medium)*\n* **ID 14:** keyed task *(Priority: Medium)*\n* **ID 2, 3, 6:** persist me *(Priority: Medium)*\n* **ID 4, 5, 7, 8, 10, 13:** via gateway *(Pr"
+    },
+    {
+      "scenario": "complete_task",
+      "run": 1,
+      "expected_tool": "complete_task",
+      "first_tool": "complete_task",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "complete_task",
+          "args": {
+            "task_id": 14
+          },
+          "ok": true
+        }
+      ],
+      "final": "Task 14 (\"keyed task\") has been marked as done."
+    },
+    {
+      "scenario": "delete_task",
+      "run": 1,
+      "expected_tool": "delete_task",
+      "first_tool": "delete_task",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "delete_task",
+          "args": {
+            "task_id": 13
+          },
+          "ok": true
+        }
+      ],
+      "final": "The request to delete task 13 has been submitted and is currently pending approval from a second admin (Approval ID: 1)."
+    },
+    {
+      "scenario": "pending_approvals",
+      "run": 1,
+      "expected_tool": "list_pending_approvals",
+      "first_tool": "list_pending_approvals",
+      "tool_ok": true,
+      "args_ok": true,
+      "steps": 1,
+      "first_call_ok": true,
+      "calls": [
+        {
+          "tool": "list_pending_approvals",
+          "args": {},
+          "ok": true
+        }
+      ],
+      "final": "There is 1 approval request waiting for review:\n\n* **Request ID:** 1\n* **Requester:** Carol\n* **Action:** Delete task ID 13 (`delete_task`)\n* **Status:** Pending"
+    }
+  ],
+  "ts": 1791582813.7266693
+}
