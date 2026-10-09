@@ -1,3 +1,4 @@
+import json
 from dataclasses import asdict
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from auth import authenticate
 from errors import ErrorCategory, ToolFailure, classify
 from policy import Decision, authorize
 from retry import call_with_retry
+from security import inspect_text, sanitize_task, verdict
 from faults import from_env
 
 BACKEND = Path(__file__).parent / "tasks_server.py"
@@ -80,6 +82,11 @@ async def create_task(
     """Create a new task. priority must be low, medium, or high."""
     arguments = {"title": title, "priority": priority}
     principal, decision = _check("create_task", arguments)
+    if verdict(inspect_text(title)) == "block":
+        audit.record(
+            principal.name, "create_task", arguments, "DENY", "blocked: suspicious title content"
+        )
+        raise ToolFailure(ErrorCategory.VALIDATION, "title rejected by content policy")
     if idempotency_key:
         arguments["idempotency_key"] = f"{principal.name}:{idempotency_key}"
     return await _run(principal.name, "create_task", arguments, decision.value)
@@ -176,10 +183,18 @@ async def all_tasks() -> str:
     principal, decision = _check("read_tasks", {})
     async with Client(BACKEND) as backend:
         contents = await backend.read_resource("tasks://all")
-    audit.record(principal.name, "read_tasks", {}, decision.value, "executed")
-    return contents[0].text
+    cleaned = []
+    withheld = 0
+    for task in json.loads(contents[0].text):
+        safe_task, _ = sanitize_task(task)
+        withheld += 1 if safe_task.get("flagged") else 0
+        cleaned.append(safe_task)
+    outcome = "executed" if withheld == 0 else f"executed, {withheld} title(s) withheld"
+    audit.record(principal.name, "read_tasks", {}, decision.value, outcome)
+    return json.dumps(cleaned)
 
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="127.0.0.1", port=8000)
+
 
