@@ -6,7 +6,7 @@ Hands-on MCP lab built with FastMCP: tools, resources, prompts, gateway, authent
 - M1: server with tools, resources and prompts over stdio and Streamable HTTP (docs/m1.md)
 - M2: SQLite storage, token auth, policy engine (ALLOW, DENY, REQUIRE_APPROVAL), two-admin approval flow and audit log (docs/m2.md)
 - M3: error classification, retry with backoff, idempotency keys, approval execution status and fault injection (docs/m3.md)
-- M4: attack lab, content scanners, path confinement and gateway enforcement (docs/m4.md)
+- M4: attack lab, content scanners, path confinement, gateway enforcement, agent evaluation and role-filtered tool listing (docs/m4.md)
 
 ## Run
 
@@ -19,4 +19,5 @@ Hands-on MCP lab built with FastMCP: tools, resources, prompts, gateway, authent
 
     $env:MCP_FAULTS = "complete_task:rate_limit:2,delete_task:timeout:5"
     uv run python m2_gateway/gateway.py
+
 

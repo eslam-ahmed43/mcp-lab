@@ -6,6 +6,7 @@ from pathlib import Path
 from fastmcp import Client, FastMCP
 from fastmcp.client.transports import PythonStdioTransport
 from fastmcp.server.dependencies import get_http_headers
+from fastmcp.server.middleware import Middleware, MiddlewareContext
 
 import audit
 from approvals import ApprovalError, ApprovalStore
@@ -14,6 +15,7 @@ from errors import ErrorCategory, ToolFailure, classify
 from policy import Decision, authorize
 from retry import call_with_retry
 from security import inspect_text, sanitize_task, verdict
+from visibility import filter_tools
 from faults import from_env
 
 BACKEND = Path(__file__).parent / "tasks_server.py"
@@ -39,6 +41,15 @@ def _check(tool: str, arguments: dict):
         audit.record(user, tool, arguments, decision.value, "blocked")
         raise PermissionError(f"{tool} denied")
     return principal, decision
+
+class RoleToolFilter(Middleware):
+    async def on_list_tools(self, context: MiddlewareContext, call_next):
+        tools = await call_next(context)
+        return filter_tools(_principal(), tools)
+
+
+mcp.add_middleware(RoleToolFilter())
+
 
 def backend_transport():
     env = {"MCP_DB": os.environ["MCP_DB"]} if os.environ.get("MCP_DB") else None
@@ -204,6 +215,7 @@ async def all_tasks() -> str:
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="127.0.0.1", port=8000)
+
 
 
 
