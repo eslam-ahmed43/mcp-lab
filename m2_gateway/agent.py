@@ -94,7 +94,7 @@ async def generate(client, contents, config):
                 raise ToolFailure(ErrorCategory.UNAVAILABLE, text[:200]) from exc
             raise
 
-    return await call_with_retry(attempt, max_attempts=5, base_delay=2.0, max_delay=30.0)
+    return await call_with_retry(attempt, max_attempts=6, base_delay=4.0, max_delay=60.0)
 
 
 async def run_agent(token: str, prompt: str, system: str) -> dict:
@@ -141,3 +141,4 @@ async def run_agent(token: str, prompt: str, system: str) -> dict:
                 )
             contents.append(types.Content(role="user", parts=replies))
     return {"calls": calls, "final": final_text}
+

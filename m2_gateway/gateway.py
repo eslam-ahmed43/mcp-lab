@@ -1,8 +1,10 @@
 import json
+import os
 from dataclasses import asdict
 from pathlib import Path
 
 from fastmcp import Client, FastMCP
+from fastmcp.client.transports import PythonStdioTransport
 from fastmcp.server.dependencies import get_http_headers
 
 import audit
@@ -16,6 +18,7 @@ from faults import from_env
 
 BACKEND = Path(__file__).parent / "tasks_server.py"
 SAFE_TO_RETRY = {"complete_task", "delete_task"}
+SCAN_ENABLED = os.environ.get("MCP_CONTENT_SCAN", "on") != "off"
 
 mcp = FastMCP("gateway")
 approvals = ApprovalStore()
@@ -37,16 +40,21 @@ def _check(tool: str, arguments: dict):
         raise PermissionError(f"{tool} denied")
     return principal, decision
 
+def backend_transport():
+    env = {"MCP_DB": os.environ["MCP_DB"]} if os.environ.get("MCP_DB") else None
+    return PythonStdioTransport(script_path=BACKEND, env=env)
+
+
 async def _call_backend(tool: str, arguments: dict):
     faults.maybe_fail(tool)
-    async with Client(BACKEND) as backend:
+    async with Client(backend_transport()) as backend:
         result = await backend.call_tool(tool, arguments)
     faults.maybe_fail(tool, "after")
     return result.data
 
 
 async def _task_exists(task_id: int) -> bool:
-    async with Client(BACKEND) as backend:
+    async with Client(backend_transport()) as backend:
         try:
             await backend.read_resource(f"tasks://{task_id}")
         except Exception as exc:
@@ -82,7 +90,7 @@ async def create_task(
     """Create a new task. priority must be low, medium, or high."""
     arguments = {"title": title, "priority": priority}
     principal, decision = _check("create_task", arguments)
-    if verdict(inspect_text(title)) == "block":
+    if SCAN_ENABLED and verdict(inspect_text(title)) == "block":
         audit.record(
             principal.name, "create_task", arguments, "DENY", "blocked: suspicious title content"
         )
@@ -181,12 +189,12 @@ async def retry_approval(approval_id: int) -> dict:
 async def all_tasks() -> str:
     """All tasks, read-only context."""
     principal, decision = _check("read_tasks", {})
-    async with Client(BACKEND) as backend:
+    async with Client(backend_transport()) as backend:
         contents = await backend.read_resource("tasks://all")
     cleaned = []
     withheld = 0
     for task in json.loads(contents[0].text):
-        safe_task, _ = sanitize_task(task)
+        safe_task, _ = sanitize_task(task) if SCAN_ENABLED else (task, [])
         withheld += 1 if safe_task.get("flagged") else 0
         cleaned.append(safe_task)
     outcome = "executed" if withheld == 0 else f"executed, {withheld} title(s) withheld"
@@ -196,5 +204,7 @@ async def all_tasks() -> str:
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="127.0.0.1", port=8000)
+
+
 
 

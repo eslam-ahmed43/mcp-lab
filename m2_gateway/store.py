@@ -1,8 +1,9 @@
+import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "tasks.db"
+DB_PATH = Path(os.environ.get("MCP_DB") or Path(__file__).parent / "tasks.db")
 
 
 class KeyReuseError(Exception):
@@ -104,3 +105,4 @@ def delete_task(task_id: int) -> bool:
     with closing(_connect()) as conn, conn:
         cur = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     return cur.rowcount > 0
+
